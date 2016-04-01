@@ -154,6 +154,7 @@ class P2OSNode
     std::string psos_tcp_host;
     std::string odom_frame_id;
     std::string base_link_frame_id;
+    bool        publish_odom_transform;
     int         psos_fd;
     bool        psos_use_tcp;
     int         psos_tcp_port;
@@ -170,6 +171,15 @@ class P2OSNode
     //! Control wheel velocities individually?
     int direct_wheel_vel_control;
     int radio_modemp;
+
+//! Odometry cal
+    int revcount ; //#ticks per 180 degree, resolution of the robot
+    int ticksmm ; //encoder ticks per millimeter tire motion
+    int driftfactor; //working drift, to correct rotational offset
+
+    boost::array<double, 36> odom_pose_cov;
+    boost::array<double, 36> odom_twist_cov;
+
 
     //! Maximum motor speed in Meters per second.
     int motor_max_speed;

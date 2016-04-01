@@ -33,7 +33,15 @@
 #include <tf/tf.h>
 #include <tf/transform_datatypes.h>
 #include <sstream>
-#include <boost/assign/list_of.hpp>
+
+
+void SIP::setOdomCov( boost::array<double, 36> pose_cov_,
+		      boost::array<double, 36> twist_cov_)
+{
+  pose_cov = pose_cov_;
+  twist_cov = twist_cov_;
+  printf("setOdom %.2f %.2f\n", twist_cov_[0], twist_cov[0]);
+}
 
 void SIP::FillStandard(ros_p2os_data_t* data)
 {
@@ -77,22 +85,12 @@ void SIP::FillStandard(ros_p2os_data_t* data)
   data->position.twist.twist.linear.y = 0.0;
   data->position.twist.twist.angular.z = ((double)(rvel-lvel)/(2.0/PlayerRobotParams[param_idx].DiffConvFactor));
 
-  
-  data->position.pose.covariance = boost::assign::list_of	(1e-3) (0)    (0)   (0)   (0)   (0)
-                                                          (0)    (1e-3) (0)   (0)   (0)   (0)
-                                                          (0)    (0)    (1e6) (0)   (0)   (0)
-                                                          (0)    (0)    (0)   (1e6) (0)   (0)
-                                                          (0)    (0)    (0)   (0)   (1e6) (0)
-                                                          (0)    (0)    (0)   (0)   (0)   (1e3) ;
+  data->position.pose.covariance = pose_cov;
 
-	data->position.twist.covariance = boost::assign::list_of (1e-3) (0)    (0)   (0)   (0)   (0)
-                                                           (0)    (1e-3) (0)   (0)   (0)   (0)
-                                                           (0)    (0)    (1e6) (0)   (0)   (0)
-                                                           (0)    (0)    (0)   (1e6) (0)   (0)
-                                                           (0)    (0)    (0)   (0)   (1e6) (0)
-                                                           (0)    (0)    (0)   (0)   (0)   (1e3) ;
-
-
+  data->position.twist.covariance = twist_cov;
+  data->position.twist.covariance[0] = twist_cov[0];
+  data->position.twist.covariance[7] = twist_cov[7];
+  data->position.twist.covariance[35] = twist_cov[35];
   //publish transform
   data->odom_trans.header = data->position.header;
   data->odom_trans.child_frame_id = data->position.child_frame_id;

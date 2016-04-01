@@ -165,6 +165,12 @@ enum P2OSCommand {
   TRANSKP = 85,      // Added in P2OS1.M
   TRANSKV = 86,      // Added in P2OS1.M
   TRANSKI = 87,      // Added in P2OS1.M
+ 
+  //ETHZ added
+  REVCOUNT = 88,
+  DRIFTFACTOR = 89,
+  TICKSMM = 93,
+
   SOUND = 90,
   PLAYLIST = 91,
   SOUNDTOG = 92, ///< int, AmigoBot (old H8 model) specific, enable(1) or

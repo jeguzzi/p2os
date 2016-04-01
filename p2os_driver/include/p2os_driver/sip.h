@@ -27,7 +27,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <p2os_driver/p2os.h>
-
+#include <boost/assign/list_of.hpp>
 typedef struct ArmJoint
 {
 	char speed;
@@ -71,6 +71,10 @@ class SIP
     std::string odom_frame_id;
     std::string base_link_frame_id;
 
+    ///
+    boost::array<double, 36> pose_cov, twist_cov;
+    //    double pose_cov[36], twist_cov[36];
+
     // these values are returned in a CMUcam serial string extended SIP
     // (in host byte-order)
     unsigned short blobmx, blobmy;	// Centroid
@@ -109,6 +113,9 @@ class SIP
     void PrintArm ();
     void PrintArmInfo ();
     void FillStandard(ros_p2os_data_t* data);
+
+    void setOdomCov( boost::array<double, 36> pose_cov,
+		     boost::array<double, 36> twist_cov);
     //void FillSERAUX(player_p2os_data_t* data);
     //void FillGyro(player_p2os_data_t* data);
     //void FillArm(player_p2os_data_t* data);
@@ -129,6 +136,22 @@ class SIP
             armJointPosRads[i] = 0;
             armJointTargetPos[i] = 0;
         }
+	pose_cov = boost::assign::list_of
+	  (1e-3) (0)    (0)   (0)   (0)   (0)
+	  (0)    (1e-3) (0)   (0)   (0)   (0)
+	  (0)    (0)    (1e6) (0)   (0)   (0)
+	  (0)    (0)    (0)   (1e6) (0)   (0)
+	  (0)    (0)    (0)   (0)   (1e6) (0)
+	  (0)    (0)    (0)   (0)   (0)   (1e3);
+
+	twist_cov = boost::assign::list_of
+	  (1e-3) (0)    (0)   (0)   (0)   (0)
+	  (0)    (1e-3) (0)   (0)   (0)   (0)
+	  (0)    (0)    (1e6) (0)   (0)   (0)
+	  (0)    (0)    (0)   (1e6) (0)   (0)
+	  (0)    (0)    (0)   (0)   (1e6) (0)
+	  (0)    (0)    (0)   (0)   (0)   (1e3) ;
+	
     }
 
     ~SIP(void)

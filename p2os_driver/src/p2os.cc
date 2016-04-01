@@ -97,6 +97,74 @@ P2OSNode::P2OSNode(ros::NodeHandle nh) :
     n_private.param("max_yawdecel", spd, 0.0);
     motor_max_rot_decel = (short)rint(RTOD(spd));
     
+  //odom calibration: revcount
+  int odomparam;
+  //essential:
+  n_private.param( "revcount", odomparam, 38000);
+  revcount = odomparam; //#ticks per 180 degree, resolution of the robot
+  //these two parameters are not set by default:
+  n_private.param( "ticksmm", odomparam, -1);
+  ticksmm = odomparam; //encoder ticks per millimeter tire motion
+  n_private.param( "driftfactor", odomparam, -1);
+  driftfactor = odomparam; //working drift, to correct rotational offset
+
+  n_private.param("publish_odom_transform", publish_odom_transform, false);
+
+  ///
+  // Load up the process noise covariance (from the launch file/parameter server)
+
+
+  // Sum a list of doubles from the parameter server
+  std::vector<double> my_double_list;
+  my_double_list.resize(36);
+
+  	odom_pose_cov = boost::assign::list_of
+	  (1e-3) (0)    (0)   (0)   (0)   (0)
+	  (0)    (1e-3) (0)   (0)   (0)   (0)
+	  (0)    (0)    (1e6) (0)   (0)   (0)
+	  (0)    (0)    (0)   (1e6) (0)   (0)
+	  (0)    (0)    (0)   (0)   (1e6) (0)
+	  (0)    (0)    (0)   (0)   (0)   (1e3);
+	
+  n_private.getParam("odom_pose_cov", my_double_list);
+  if( my_double_list.size() && my_double_list.size() != 36 )
+    {
+      ROS_ERROR("odom_pose_cov should have 36 elements");
+    }
+  else
+    {
+      for(unsigned i=0; i < 36; i++)
+	{
+	  odom_pose_cov[i] = my_double_list[i];
+	}
+    }
+  //#if 0
+  //  my_double_list.clear();
+
+    	odom_twist_cov = boost::assign::list_of
+	  (1e-3) (0)    (0)   (0)   (0)   (0)
+	  (0)    (1e-3) (0)   (0)   (0)   (0)
+	  (0)    (0)    (1e6) (0)   (0)   (0)
+	  (0)    (0)    (0)   (1e6) (0)   (0)
+	  (0)    (0)    (0)   (0)   (1e6) (0)
+	  (0)    (0)    (0)   (0)   (0)   (1e3);
+
+  n_private.getParam("odom_twist_cov", my_double_list);
+  if( my_double_list.size() && my_double_list.size() != 36 )
+    {
+      ROS_ERROR("odom_twist_cov should have 36 elements");
+    }
+  else
+    {
+      for(unsigned i=0; i < 36; i++)
+	{
+	  odom_twist_cov[i] = my_double_list[i];
+	  printf("twist_cov[%d] = %.2f\n", i, my_double_list[i]);
+	}
+    }
+  ////
+  //  #endif
+
     desired_freq = 10;
     
     // advertise services
@@ -515,6 +583,7 @@ int P2OSNode::Setup()
         sippacket = new SIP(param_idx);
         sippacket->odom_frame_id = odom_frame_id;
         sippacket->base_link_frame_id = base_link_frame_id;
+        sippacket->setOdomCov(odom_pose_cov, odom_twist_cov);
     }
     /*
   sippacket->x_offset = 0;
@@ -566,7 +635,38 @@ int P2OSNode::Setup()
         this->SendReceive(&accel_packet,false);
     }
     
-    
+  ///////////////////Odometry/////////////////////////////////
+  //ETHZ Dec 8 2010
+  P2OSPacket odom_packet;
+  unsigned char odom_command[4];
+  if(this->revcount > 0)
+  {
+    odom_command[0] = REVCOUNT;
+    odom_command[1] = ARGINT;
+    odom_command[2] = this->revcount & 0x00FF;
+    odom_command[3] = (this->revcount & 0xFF00) >> 8;
+    odom_packet.Build(odom_command, 4);
+    this->SendReceive(&odom_packet);
+  }
+  if(this->ticksmm > 0)
+  {
+    odom_command[0] = TICKSMM;
+    odom_command[1] = ARGINT;
+    odom_command[2] = this->ticksmm & 0x00FF;
+    odom_command[3] = (this->ticksmm & 0xFF00) >> 8;
+    odom_packet.Build(odom_command, 4);
+    this->SendReceive(&odom_packet);
+  }
+  if(this->driftfactor > 0)
+  {
+    odom_command[0] = DRIFTFACTOR;
+    odom_command[1] = ARGINT;
+    odom_command[2] = this->driftfactor & 0x00FF;
+    odom_command[3] = (this->driftfactor & 0xFF00) >> 8;
+    odom_packet.Build(odom_command, 4);
+    this->SendReceive(&odom_packet);
+  }    
+
     // if requested, change PID settings
     P2OSPacket pid_packet;
     unsigned char pid_command[4];
@@ -698,11 +798,13 @@ int P2OSNode::Shutdown()
 void
 P2OSNode::StandardSIPPutData(ros::Time ts)
 {
-    
-    p2os_data.position.header.stamp = ts;
-    pose_pub_.publish(p2os_data.position);
-    p2os_data.odom_trans.header.stamp = ts;
-    odom_broadcaster.sendTransform(p2os_data.odom_trans);
+  p2os_data.position.header.stamp = ts;
+  pose_pub_.publish(p2os_data.position);
+  if( this->publish_odom_transform )
+    {
+      p2os_data.odom_trans.header.stamp = ts;
+      odom_broadcaster.sendTransform(p2os_data.odom_trans);
+    }
     
     p2os_data.batt.header.stamp = ts;
     batt_pub_.publish(p2os_data.batt);
