@@ -81,16 +81,24 @@ void SIP::FillStandard(ros_p2os_data_t* data)
   data->position.pose.pose.orientation = tf::createQuaternionMsgFromYaw(pa);
 
     // add rates
-  data->position.twist.twist.linear.x = ((lvel + rvel) / 2) / 1e3;
+  double s = ((lvel + rvel) / 2) / 1e3;
+  double va = ((double)(rvel-lvel)/(2.0/PlayerRobotParams[param_idx].DiffConvFactor));
+  data->position.twist.twist.linear.x = s;
   data->position.twist.twist.linear.y = 0.0;
-  data->position.twist.twist.angular.z = ((double)(rvel-lvel)/(2.0/PlayerRobotParams[param_idx].DiffConvFactor));
+  data->position.twist.twist.angular.z = va;
 
   data->position.pose.covariance = pose_cov;
 
   data->position.twist.covariance = twist_cov;
-  data->position.twist.covariance[0] = twist_cov[0];
-  data->position.twist.covariance[7] = twist_cov[7];
-  data->position.twist.covariance[35] = twist_cov[35];
+
+  //made cov depends (quadr.) on speed
+
+  double fs = s/0.8;
+  double fva = va/1.5;
+
+  data->position.twist.covariance[0] = (fs*fs)*twist_cov[0];
+  data->position.twist.covariance[7] = (fs*fs)*twist_cov[7];
+  data->position.twist.covariance[35] = (fva*fva)*twist_cov[35];
   //publish transform
   data->odom_trans.header = data->position.header;
   data->odom_trans.child_frame_id = data->position.child_frame_id;
