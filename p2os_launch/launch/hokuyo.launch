@@ -1,3 +1,6 @@
 <launch>
-	<node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node" />
+	<arg name="laser_device" default="$(optenv laser /dev/mylaser)"/>	
+	<node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node">
+	      <param name="port" type="string" value="$(arg laser_device)" />
+	</node>
 </launch>
