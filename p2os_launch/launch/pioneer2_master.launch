@@ -9,13 +9,26 @@
 	<arg name="Dashboard" value="0"/>
 	<arg name="enableMotor" value="1"/>
 	<arg name="gps" value="1"/>
-	<arg name="camera" value="0"/>
+	<arg name="camera" value="1"/>
 	<arg name="videoWebServer" value="0"/>
+	<arg name="ahrs" value="1"/>
+
+	<arg name="robot_device" default="$(optenv robot /dev/myrobot)"/>
+	<arg name="ahrs_device" default="$(optenv ahrs /dev/myahrs)"/>	
+
+
+	<!-- Start AHRS -->
+
+	<group if="$(arg ahrs)">
+	       <node pkg="myahrs_driver" type="myahrs_driver" name="ahrs">
+	       	     <param name="port" value="$(arg ahrs_device)"/>
+	       </node>	
+	</group>
 
 
         <!-- Start the p2os ROS Driver -->
 	<group if="$(arg P2OS_Driver)" >
-	<node pkg="p2os_driver" name="p2os_driver" type="p2os_driver" output="screen" respawn="true" respawn_delay="30" args="_port:=/dev/myrobot _pulse:=1.0">
+	<node pkg="p2os_driver" name="p2os_driver" type="p2os_driver" output="screen" respawn="true" respawn_delay="30" args="_port:=$(arg robot_device) _pulse:=1.0">
 	<param name="ticksmm" value="135.7" />
 	<param name="revcount" value="31390" />	    
 	<param name="driftfactor" value="45" />
@@ -69,9 +82,18 @@
         </group>
 
         <!-- Start the camera -->
+
+	<group if="$(arg camera)">
+                <node pkg="camera1394" type="camera1394_node" name="camera1394_node" >
+    		    <param name="video_mode" value="640x480_yuv422"/>
+		    <param name="bayer_method" value="Bilinear"/>
+  		</node>	    
+        </group>
+
+	<!--
         <group if="$(arg camera)">
                <include file="$(find p2os_launch)/launch/camera_web_server.launch" /> 
-        </group>
+        </group>-->
 
         <!-- Start the camera -->
         <group if="$(arg gps)">
