@@ -14,7 +14,7 @@
 	<arg name="ahrs" value="1"/>
 
 	<arg name="robot_device" default="$(optenv robot /dev/myrobot)"/>
-	<arg name="ahrs_device" default="$(optenv ahrs /dev/myahrs)"/>	
+	<arg name="ahrs_device" default="$(optenv ahrs /dev/myahrs)"/>
 
 
 	<!-- Start AHRS -->
@@ -22,7 +22,7 @@
 	<group if="$(arg ahrs)">
 	       <node pkg="myahrs_driver" type="myahrs_driver" name="ahrs">
 	       	     <param name="port" value="$(arg ahrs_device)"/>
-	       </node>	
+	       </node>
 	</group>
 
 
@@ -30,27 +30,21 @@
 	<group if="$(arg P2OS_Driver)" >
 	<node pkg="p2os_driver" name="p2os_driver" type="p2os_driver" output="screen" respawn="true" respawn_delay="30" args="_port:=$(arg robot_device) _pulse:=1.0">
 	<param name="ticksmm" value="135.7" />
-	<param name="revcount" value="31390" />	    
+	<param name="revcount" value="31390" />
 	<param name="driftfactor" value="45" />
-	<param name="max_xspeed" value="0.7" />	
-	<param name="max_yawspeed" value="2" />	
- 	<param name="publish_odom_transform" value="false" />	   
-<rosparam param="odom_twist_cov"> 
-[0.003,  0, 0, 0, 0, 0,
-0,  0.00001, 0, 0, 0, 0,
-0,  0, 0, 0, 0, 0,
-0,  0, 0, 0, 0, 0,
-0,  0, 0, 0, 0, 0,
-0,  0, 0, 0, 0, 0.005]
-</rosparam>
-	</node>	
+	<param name="max_xspeed" value="0.7" />
+	<param name="max_yawspeed" value="2" />
+ 	<param name="publish_odom_transform" value="false" />
+	<param param="std_dev_speed" value="0.05"/>
+	<param param="std_dev_angular_speed" value="0.1"/>
+	</node>
 	</group>
 
 	<!-- Start the Dashboard -->
 	<group if="$(arg Dashboard)">
 	<node pkg="p2os_dashboard" name="p2os_dashboard" type="p2os_dashboard"/>
 	</group>
-	
+
 
         <!-- Start the teleoperation node for keyboard control -->
         <group if="$(arg KeyboardTeleop)">
@@ -59,26 +53,26 @@
 
 	 <!-- Start the teleoperation node for joystick control -->
         <group if="$(arg JoystickTeleop)">
-                <include file="$(find p2os_launch)/launch/teleop_joy.launch" /> 
+                <include file="$(find p2os_launch)/launch/teleop_joy.launch" />
         </group>
 
         <!-- Publish the required transform -->
         <group if="$(arg Transform)">
-		<include file="$(find p2os_launch)/launch/tf_base_link_to_laser.launch" />          
+		<include file="$(find p2os_launch)/launch/tf_base_link_to_laser.launch" />
         </group>
 
 
 
         <!-- Start the Hokuyo Laser node if Hokuyo Laser is used -->
         <group if="$(arg HokuyoLaser)">
-                <include file="$(find p2os_launch)/launch/hokuyo.launch" /> 
+                <include file="$(find p2os_launch)/launch/hokuyo.launch" />
         </group>
 
 
 
         <!-- Start the SICK LMS Laser Node if a SICK Laser is used -->
         <group if="$(arg SICKLMSLaser)">
-               <include file="$(find p2os_launch)/launch/sicklms.launch" /> 
+               <include file="$(find p2os_launch)/launch/sicklms.launch" />
         </group>
 
         <!-- Start the camera -->
@@ -87,23 +81,22 @@
                 <node pkg="camera1394" type="camera1394_node" name="camera1394_node" >
     		    <param name="video_mode" value="640x480_yuv422"/>
 		    <param name="bayer_method" value="Bilinear"/>
-  		</node>	    
+  		</node>
         </group>
 
 	<!--
         <group if="$(arg camera)">
-               <include file="$(find p2os_launch)/launch/camera_web_server.launch" /> 
+               <include file="$(find p2os_launch)/launch/camera_web_server.launch" />
         </group>-->
 
         <!-- Start the camera -->
         <group if="$(arg gps)">
 	<node pkg="gpsd_client" name="gpsd_client" type="gpsd_client" respawn="true" respawn_delay="30" />
         </group>
-        <include file="$(find p2os_urdf)/launch/pioneer3at_urdf.launch"/>	
+        <include file="$(find p2os_urdf)/launch/pioneer3at_urdf.launch"/>
 
 	  <group if="$(arg enableMotor)" >
   	  <node name="rostopic" pkg="rostopic" type="rostopic" args="pub -1 /cmd_motor_state p2os_msgs/MotorState 1"/>
  	   </group>
 
 </launch>
-

@@ -47,8 +47,8 @@
 #include <diagnostic_updater/diagnostic_updater.h>
 
 /*! \brief Container struct.
- *  
- *  Create a struct that holds the 
+ *
+ *  Create a struct that holds the
  *  Robot's sensors.
  */
 typedef struct ros_p2os_data
@@ -137,7 +137,7 @@ class P2OSNode
     ros::NodeHandle n;
     //! Node Handler used for private data publication.
     ros::NodeHandle nh_private;
- 
+
     diagnostic_updater::Updater diagnostic_;
 
     diagnostic_updater::DiagnosedPublisher<p2os_msgs::BatteryState> batt_pub_;
@@ -177,9 +177,11 @@ class P2OSNode
     int ticksmm ; //encoder ticks per millimeter tire motion
     int driftfactor; //working drift, to correct rotational offset
 
-    boost::array<double, 36> odom_pose_cov;
-    boost::array<double, 36> odom_twist_cov;
+    //boost::array<double, 36> odom_pose_cov;
+    //boost::array<double, 36> odom_twist_cov;
 
+    double pstd_dev_speed;
+    double pstd_dev_angular_speed;
 
     //! Maximum motor speed in Meters per second.
     int motor_max_speed;

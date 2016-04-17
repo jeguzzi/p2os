@@ -1,7 +1,7 @@
 /*
  *  P2OS for ROS
  *  Copyright (C) 2009
- *     David Feil-Seifer, Brian Gerkey, Kasper Stoy, 
+ *     David Feil-Seifer, Brian Gerkey, Kasper Stoy,
  *      Richard Vaughan, & Andrew Howard
  *
  *
@@ -35,13 +35,19 @@
 #include <sstream>
 
 
-void SIP::setOdomCov( boost::array<double, 36> pose_cov_,
-		      boost::array<double, 36> twist_cov_)
+void SIP::setTwistCov(double pstd_dev_speed_, pstd_dev_angular_speed_)
 {
-  pose_cov = pose_cov_;
-  twist_cov = twist_cov_;
-  printf("setOdom %.2f %.2f\n", twist_cov_[0], twist_cov[0]);
+  pstd_dev_speed = pstd_dev_speed_;
+  pstd_dev_angular_speed = pstd_dev_angular_speed_;
 }
+
+// void SIP::setOdomCov( boost::array<double, 36> pose_cov_,
+// 		      boost::array<double, 36> twist_cov_)
+// {
+//   pose_cov = pose_cov_;
+//   twist_cov = twist_cov_;
+//   printf("setOdom %.2f %.2f\n", twist_cov_[0], twist_cov[0]);
+// }
 
 void SIP::FillStandard(ros_p2os_data_t* data)
 {
@@ -87,25 +93,24 @@ void SIP::FillStandard(ros_p2os_data_t* data)
   data->position.twist.twist.linear.y = 0.0;
   data->position.twist.twist.angular.z = va;
 
-  data->position.pose.covariance = pose_cov;
+  //data->position.pose.covariance = pose_cov;
 
-  data->position.twist.covariance = twist_cov;
+  //data->position.twist.covariance = twist_cov;
 
   //made cov depends (quadr.) on speed
 
-  double fs = s/0.8;
-  double fva = va/1.5;
-
-  data->position.twist.covariance[0] = (fs*fs)*twist_cov[0];
-  data->position.twist.covariance[7] = (fs*fs)*twist_cov[7];
-  data->position.twist.covariance[35] = (fva*fva)*twist_cov[35];
+  double cs = pstd_dev_speed * pstd_dev_speed * s *s;
+  double cva = pstd_dev_angular_speed * pstd_dev_angular_speed * va * va;
+  data->position.twist.covariance[0] = cs;
+  data->position.twist.covariance[7] = cs;
+  data->position.twist.covariance[35] = cva;
   //publish transform
   data->odom_trans.header = data->position.header;
   data->odom_trans.child_frame_id = data->position.child_frame_id;
   data->odom_trans.transform.translation.x = px;
   data->odom_trans.transform.translation.y = py;
   data->odom_trans.transform.translation.z = 0;
-  data->odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(pa); 
+  data->odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(pa);
 
   // battery
   data->batt.voltage = battery / 10.0;

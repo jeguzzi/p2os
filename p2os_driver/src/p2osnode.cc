@@ -33,38 +33,38 @@
 int main(int argc, char** argv)
 {
     ros::init(argc,argv, "p2os");
-    ros::NodeHandle n;
-    
+    ros::NodeHandle n("~");
+
     P2OSNode *p = new P2OSNode(n);
-    
+
     if(p->Setup())
     {
         ROS_ERROR("p2os setup failed...");
         return -1;
     }
-    
+
     p->ResetRawPositions();
-    
+
     ros::Time lastTime;
-    
+
     while(ros::ok())
     {
         p->check_and_set_vel();
         p->check_and_set_motor_state();
         p->check_and_set_gripper_state();
-        
+
         if(p->get_pulse() > 0)
         {
             ros::Time currentTime = ros::Time::now();
             ros::Duration pulseInterval = currentTime - lastTime;
             if(pulseInterval.toSec() > p->get_pulse())
-            { 
+            {
                 ROS_DEBUG ("sending pulse" );
                 p->SendPulse();
                 lastTime = currentTime;
             }
         }
-        
+
         // Hack fix to get around the fact that if no commands are sent to the
         // robot via SendReceive, the driver will never read SIP packets and so
         // never send data back to clients. We need a better way of doing regular
@@ -74,13 +74,13 @@ int main(int argc, char** argv)
         p->updateDiagnostics();
         ros::spinOnce();
     }
-    
+
     if(!p->Shutdown())
     {
         ROS_WARN("p2os shutdown failed... your robot might be heading for the wall?");
     }
     delete p; //delete pointer
-    
+
     ROS_INFO( "Quitting... " );
     return 0;
 }
