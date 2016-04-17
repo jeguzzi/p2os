@@ -35,7 +35,7 @@
 #include <sstream>
 
 
-void SIP::setTwistCov(double pstd_dev_speed_, pstd_dev_angular_speed_)
+void SIP::setTwistCov(double pstd_dev_speed_, double pstd_dev_angular_speed_)
 {
   pstd_dev_speed = pstd_dev_speed_;
   pstd_dev_angular_speed = pstd_dev_angular_speed_;
